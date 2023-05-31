@@ -5,7 +5,7 @@ import NeonClimbingApp
 print("Hello! :)")
 
 pygame.init()
-screen = NeonClimbingScreen.Screen(0, 0, 60)
+screen = NeonClimbingScreen.Screen(1920, 1080, 60)
 app = NeonClimbingApp.App()
 
 # Utility Variables
@@ -24,7 +24,6 @@ while running:
 
         # Handle Keyboard Input
         running = app.handleKeyboard(event)
-
     # end for    
 
     # Update Frame
@@ -35,6 +34,6 @@ while running:
 
     # Update Display
     pygame.display.update()
-    # screen.fpsClock.tick(screen.FPS)
+    screen.fpsClock.tick(60)
 
 # end while
