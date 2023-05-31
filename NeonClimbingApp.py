@@ -18,7 +18,7 @@ class App:
     coordsTime      = (1460,    5)
     coordsImage     = (1280,    150)
     coordsCurrently = (coordsHeader[0] + 185,     185)
-    coordsIcon      = (75,     220)
+    coordsIcon      = (75,      220)
     coordsTemp      = (coordsIcon[0] + 250,           coordsIcon[1]+25)
     coordsHumidity  = (coordsTemp[0] + 440,     coordsTemp[1] + 30)
     coordsWind      = (coordsTemp[0] + 440,     coordsTemp[1] + 100)
