@@ -21,17 +21,28 @@ class App:
     coordsImage     = (1280,    150)
     coordsClimbIndex = (coordsImage[0] - 80, coordsImage[1])
 
-    coordsCurrently = (coordsHeader[0] + 185,     185)
-    coordsIcon      = (15,      220)
-    coordsTemp      = (coordsIcon[0] + 250,           coordsIcon[1]+25)
-    coordsHumidity  = (coordsTemp[0] + 440,     coordsTemp[1] + 30)
-    coordsWind      = (coordsTemp[0] + 440,     coordsTemp[1] + 100)
-    coordsPrecip    = (coordsIcon[0] + 200,   coordsTemp[1] + 200)
-    coordsPrecipText = (coordsPrecip[0] + 100,   coordsPrecip[1] + 15)
+    coordsCurrently = (coordsHeader[0] + 185,     195)
+    coordsIcon      = (25,      coordsCurrently[1] + 5)
+    coordsTemp      = (coordsIcon[0] + 255,           coordsIcon[1])
+    coordsHumidity  = (coordsTemp[0] + 475,     coordsTemp[1] + 30)
+    coordsDewPoint  = (coordsHumidity[0],     coordsHumidity[1] + 65)
+    coordsWind      = (coordsHumidity[0],     coordsDewPoint[1] + 65)
+    coordsPrecip    = (coordsIcon[0] + 200,   coordsTemp[1] + 250)
+    coordsPrecipText = (coordsPrecip[0] + 100,   coordsPrecip[1] + 18)
     coordsSunrise   = (coordsPrecip[0] + 280, coordsPrecip[1])
-    coordsSunriseText = (coordsSunrise[0] + 110, coordsSunrise[1] + 15)
+    coordsSunriseText = (coordsSunrise[0] + 110, coordsSunrise[1] + 18)
     coordsSunset    = (coordsSunrise[0] + 340, coordsPrecip[1])
-    coordsSunsetText = (coordsSunset[0] + 110, coordsSunset[1] + 15)
+    coordsSunsetText = (coordsSunset[0] + 110, coordsSunset[1] + 18)
+
+    # Future Forecast Coords
+    coordsTomorrow = (coordsIcon[0] + 225, coordsIcon[1] + 400)
+    coordsUbermorgen = (coordsTomorrow[0] + 525, coordsTomorrow[1])
+    coordsTomorrowIcon = (coordsTomorrow[0] - 100, coordsTomorrow[1] + 50)
+    coordsUbermorgenIcon = (coordsUbermorgen[0] - 100, coordsUbermorgen[1] + 50)
+    coordsTomorrowTemp = (coordsTomorrow[0] - 135, coordsTomorrow[1] + 270)
+    coordsUbermorgenTemp = (coordsUbermorgen[0] - 135, coordsUbermorgen[1] + 270)
+    coordsTomorrowPrecip = (coordsTomorrowIcon[0] + 260, coordsTomorrowIcon[1] + 20)
+    coordsUbermorgenPrecip = (coordsUbermorgenIcon[0] + 260, coordsUbermorgenIcon[1] + 30)
 
 
     sizeClimbIndex = (72, 900)
@@ -43,14 +54,17 @@ class App:
     def __init__(self):
 
         # Font and Text initialization
-        self.fontTemperature = pygame.font.SysFont('timesnewroman', int(175))
+        self.fontTemperature = pygame.font.SysFont('timesnewroman', int(230))
+        self.fontTempSmall = pygame.font.SysFont('timesnewroman', int(90))
         self.fontHeader = pygame.font.SysFont('timesnewroman', int(140))
-        self.fontInfo = pygame.font.SysFont('timesnewroman', int(65))
+        self.fontCurrently = pygame.font.SysFont('timesnewroman', int(80))
+        self.fontInfo = pygame.font.SysFont('timesnewroman', int(55))
         self.fontTime = pygame.font.SysFont('timesnewroman', int(40))
 
         self.colorText = (235, 235, 235)
         self.colorTempText = (255, 255, 255)
         self.colorBackground = (25, 25, 25)
+        self.colorBackground2 = (12, 12, 12)
 
         # Locations Array
         self.currentLocation = Location.WILLOW_RIVER
@@ -132,11 +146,11 @@ class App:
         screen.blit(textTitle, App.coordsHeader)
 
         # Write Currently
-        textCurrently = self.fontInfo.render("Currently {}".format(location.weatherKind), True, self.colorText)
-        screen.blit(textCurrently, App.coordsCurrently)
+        textCurrently = self.fontCurrently.render("Currently {}".format(location.weatherKind), True, self.colorText)
+        # screen.blit(textCurrently, App.coordsCurrently)
 
         # Draw Icon
-        self.paintWeatherIcon(screen)
+        self.paintWeatherIcon(screen, self.locations[self.currentLocation].weatherKind, App.coordsIcon)
 
         # Write Temperature
         textTemperature = self.fontTemperature.render("{}°F".format(location.temperature), True, self.colorTempText)
@@ -146,13 +160,17 @@ class App:
         textHumidity = self.fontInfo.render("{}% Humidity".format(location.humidity), True, self.colorText)
         screen.blit(textHumidity, App.coordsHumidity)
 
+        # Write Dew Point
+        textDewPoint = self.fontInfo.render("{}°F Dew Point".format(location.dewPoint), True, self.colorText)
+        screen.blit(textDewPoint, App.coordsDewPoint)
+
         # Write Wind
-        textWind = self.fontInfo.render("{} MPH".format(location.windSpeed, location.windDir), True, self.colorText)
+        textWind = self.fontInfo.render("{} MPH {}".format(location.windSpeed, location.windDir.value), True, self.colorText)
         screen.blit(textWind, App.coordsWind)
 
         # Draw Precipitation
         screen.blit(WeatherIcon.imgWeatherIcon[WeatherIcon.RAIN_SMALL], App.coordsPrecip)
-        textPrecipitation = self.fontInfo.render("{:d}\"".format(int(location.precipitation/100)), True, self.colorText)
+        textPrecipitation = self.fontInfo.render("{:d}%".format(int(location.chanceOfRain)), True, self.colorText)
         screen.blit(textPrecipitation, App.coordsPrecipText)
 
         # Draw Sunrise
@@ -172,10 +190,56 @@ class App:
 
         # Draw Image
         screen.blit(location.image, App.coordsImage)
+
+        self.paintFutureForecast(screen, location)
         pass
 
-    def paintWeatherIcon(self, screen):
-        weather = self.locations[self.currentLocation].weatherKind
+    def paintFutureForecast(self, screen, location):
+        # Draw Background
+        tomLoc = App.coordsTomorrow
+        rectBorder = (tomLoc[0]-165, tomLoc[1]-5, 1050, 415)
+        pygame.draw.rect(screen, color=self.colorBackground2, rect=rectBorder)
+
+        # Draw Tomorrow
+        tomorrowDayOfWeek = self.weekdayFromIndex(location.tomorrow.date.weekday())
+        text = self.fontInfo.render("{dow:}".format(dow=tomorrowDayOfWeek), True, self.colorText)
+        screen.blit(text, App.coordsTomorrow)
+
+        # Draw Tomorrows Weather Icon
+        self.paintWeatherIcon(screen, self.deriveWeatherKind(location.tomorrow), App.coordsTomorrowIcon)
+
+        # Draw Tomorrows High
+        string = "{hi:}°F | {low:}°F".format(hi=location.tomorrow.highest_temperature, low=location.tomorrow.lowest_temperature)
+        text = self.fontTempSmall.render(string, True, self.colorText)
+        screen.blit(text, App.coordsTomorrowTemp)
+
+        # Draw Tomorrows Precipitation Chance
+        screen.blit(WeatherIcon.imgWeatherIcon[WeatherIcon.RAIN_SMALL], App.coordsTomorrowPrecip)
+        precipitationChance = location.tomorrowChanceOfRain
+        text = self.fontInfo.render("{chance:d}%".format(chance=int(precipitationChance)), True, self.colorText)
+        screen.blit(text, (App.coordsTomorrowPrecip[0]+15, App.coordsTomorrowPrecip[1]+90))
+
+        # Draw Ubermorgen
+        ubermorgenDayOfWeek = self.weekdayFromIndex(location.ubermorgen.date.weekday())
+        text = self.fontInfo.render("{}".format(ubermorgenDayOfWeek), True, self.colorText)
+        screen.blit(text, App.coordsUbermorgen)
+
+        # Draw Ubermorgens Weather Icon
+        self.paintWeatherIcon(screen, self.deriveWeatherKind(location.ubermorgen), App.coordsUbermorgenIcon)
+
+        # Draw Ubermorgens High
+        string = "{hi:}°F | {low:}°F".format(hi=location.ubermorgen.highest_temperature, low=location.ubermorgen.lowest_temperature)
+        text = self.fontTempSmall.render(string, True, self.colorText)
+        screen.blit(text, App.coordsUbermorgenTemp)
+
+        # Draw Tomorrows Precipitation Chance
+        screen.blit(WeatherIcon.imgWeatherIcon[WeatherIcon.RAIN_SMALL], App.coordsUbermorgenPrecip)
+        precipitationChance = location.ubermorgenChanceOfRain
+        text = self.fontInfo.render("{chance:}%".format(chance=int(precipitationChance)), True, self.colorText)
+        screen.blit(text, (App.coordsUbermorgenPrecip[0]+ 15, App.coordsUbermorgenPrecip[1] + 90))
+        pass
+
+    def paintWeatherIcon(self, screen, weather, coords):
         icon = WeatherIcon.imgWeatherIcon[WeatherIcon.UNKNOWN]
 
         if weather == enums.Kind.SUNNY:
@@ -203,7 +267,7 @@ class App:
         elif weather == enums.Kind.THUNDERY_HEAVY_RAIN or weather == enums.Kind.THUNDERY_SNOW_SHOWERS:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.THUNDERSTORMS]
 
-        screen.blit(icon, App.coordsIcon)
+        screen.blit(icon, coords)
         pass
 
     def paintTodaysClimbingIndex(self, screen, location):
@@ -220,7 +284,7 @@ class App:
         rect = (App.coordsClimbIndex[0], y, App.sizeClimbIndex[0], App.sizeClimbIndex[1] - height)
         thickness = 10
         rectBorder = (rect[0]-thickness, App.coordsClimbIndex[1]-thickness, App.sizeClimbIndex[0]+615+2*thickness, App.sizeClimbIndex[1]+2*thickness)
-        pygame.draw.rect(screen, color=black, rect=rectBorder)
+        pygame.draw.rect(screen, color=self.colorBackground2, rect=rectBorder)
         pygame.draw.rect(screen, color=colorClimbIndex, rect=rect)
 
         # Draw Climber Icon
@@ -230,8 +294,50 @@ class App:
         # screen.blit(text, App.coordsClimbIndex)
         pass
 
+    def weekdayFromIndex(self, index):
+        weekdays = \
+            [
+                "Mon",
+                "Tue",
+                "Wed",
+                "Thu",
+                "Fri",
+                "Sat",
+                "Sun"
+            ]
+        return weekdays[index]
 
+    @staticmethod
+    def deriveChanceOfRain(dailyForecast):
+        chance = 0
+        hourlyForecast = iter(dailyForecast.hourly)
 
+        # Note: hourlyForecast is actually every 3 hours
+        for i in range(8):
+            hourly = next(hourlyForecast)
+            if i >= 4:
+                chance += hourly.chances_of_rain
+
+        chance /= 4
+        return chance
+
+    @staticmethod
+    def deriveWeatherKind(dailyForecast):
+        hourlyForecast = iter(dailyForecast.hourly)
+        for i in range(5):
+            next(hourlyForecast)
+
+        time3pm = next(hourlyForecast)
+        return time3pm.kind
+
+    @staticmethod
+    def deriveDewPoint(dailyForecast):
+        hourlyForecast = iter(dailyForecast.hourly)
+        for i in range(5):
+            next(hourlyForecast)
+
+        time3pm = next(hourlyForecast)
+        return time3pm.dew_point
 
 class Location:
     WILLOW_RIVER = 0
@@ -261,9 +367,11 @@ class Location:
         self.image = image
         self.temperature = 999
         self.humidity = 999
+        self.dewPoint = 999
         self.windSpeed = 999
         self.windDir = "NA"
         self.precipitation = 999
+        self.chanceOfRain = 999
         self.sunrise = "NA"
         self.sunset = "NA"
         self.weatherKind = "NA"
@@ -271,6 +379,9 @@ class Location:
         self.today = 0
         self.tomorrow = 0
         self.ubermorgen = 0
+        self.tomorrowChanceOfRain = 0
+        self.ubermorgenChanceOfRain = 0
+
 
         self.climbingIndex = 0
 
@@ -283,9 +394,11 @@ class Location:
 
         humidityScore = self.calculateHumidityScore()
 
+        dewPointScore = self.calculateDewPointScore()
+
         windScore = self.calculateWindScore()
 
-        self.climbingIndex = (.50 * temperatureScore) + (.35 * humidityScore) + (.15 * windScore)
+        self.climbingIndex = (.40 * temperatureScore) + (.15 * humidityScore) + (.30 * dewPointScore) + (.15 * windScore)
 
         if self.weatherKind == enums.Kind.SUNNY:
             self.climbingIndex += 2
@@ -296,27 +409,28 @@ class Location:
         elif self.weatherKind == enums.Kind.VERY_CLOUDY:
             self.climbingIndex += 3
 
-        self.climbingIndex = self.climbingIndex - self.precipitation
+        self.climbingIndex = self.climbingIndex - self.chanceOfRain
 
-        # Validation
-        if self.climbingIndex < 0:
-            self.climbingIndex = 0
+        # Validation, 8 is lowest so picture still displays, and bar is visible
+        if self.climbingIndex < 8:
+            self.climbingIndex = 8
         if self.climbingIndex > 100:
             self.climbingIndex = 100
 
         pass
 
     def calculateTemperatureScore(self):
-        x = self.temperature
-        temperatureScore = 0
+        if self.temperature < 0 or self.temperature > 103:
+            return -100
 
-        # Formulas derived from interpolation
-        if self.temperature < 45:
-            temperatureScore = 2.8333 * x - 42.5
-        elif self.temperature < 55:
-            temperatureScore = -0.133333*math.pow(x, 2) + 14.833*x - 312.5
-        else:
-            temperatureScore = -0.0326*math.pow(x, 2) + 3.7527*x - 7.7819
+
+        x = self.temperature
+        # Formula derived from interpolation
+        temperatureScore =      0.00000016765 * math.pow(x, 5)
+        temperatureScore +=    -0.000031609 * math.pow(x, 4)
+        temperatureScore +=     0.0012482 * math.pow(x, 3)
+        temperatureScore +=     0.015440 * math.pow(x, 2)
+        temperatureScore +=     0.91796 * x
 
         # Remain within 0 - 100 bounds
         if temperatureScore < 0:
@@ -343,8 +457,32 @@ class Location:
 
         return humidityScore
 
+    def calculateDewPointScore(self):
+        dewPoint = App.deriveDewPoint(self.today)
+        if dewPoint > 75 or dewPoint < -8:
+            return 0
+
+        x = dewPoint
+        # Our Polynomial Function derived from interpolation
+        dewPointScore =     0.00000026936 * math.pow(x, 5)
+        dewPointScore +=   -0.000034728 * math.pow(x, 4)
+        dewPointScore +=    0.0016441 * math.pow(x, 3)
+        dewPointScore +=   -0.10873 * math.pow(x, 2)
+        dewPointScore +=    4.5017 * x
+        dewPointScore +=    40
+
+        if dewPointScore < 0:
+            dewPointScore = 0
+        if dewPointScore > 100:
+            dewPointScore = 100
+
+        print("{}: {}".format(x, dewPointScore))
+
+        return dewPointScore
+
     def calculateWindScore(self):
-        windScore = 100 - (5 * math.fabs(20 - self.windSpeed))
+        windScore = 100 - (10 * math.fabs(10 - self.windSpeed))
+
         if windScore < 0:
             windScore = 0
         if windScore > 100:
@@ -357,6 +495,10 @@ class Location:
             asyncio.run(self.updateWeatherAsync())
         except client_exceptions.ClientConnectorError:
             print("Connection Error")
+        except client_exceptions.ClientOSError:
+            print("OS Error")
+        except client_exceptions.ClientError:
+            print("Client Error")
         self.calculateClimbingIndex()
         pass
 
@@ -371,10 +513,16 @@ class Location:
             self.weatherKind = weather.current.kind
             self.forecast = iter(weather.forecasts)
             self.today = next(self.forecast)
+
             self.tomorrow = next(self.forecast)
             self.ubermorgen = next(self.forecast)
             self.sunrise = self.today.astronomy.sun_rise
             self.sunset  = self.today.astronomy.sun_set
+
+            self.chanceOfRain = App.deriveChanceOfRain(self.today)
+            self.tomorrowChanceOfRain = App.deriveChanceOfRain(self.tomorrow)
+            self.ubermorgenChanceOfRain = App.deriveChanceOfRain(self.ubermorgen)
+            self.dewPoint = App.deriveDewPoint(self.today)
 
             # print(self.today)
             # print(self.tomorrow)
