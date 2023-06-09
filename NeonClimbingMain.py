@@ -8,6 +8,8 @@ pygame.init()
 screen = NeonClimbingScreen.Screen(1920, 1080, 60)
 app = NeonClimbingApp.App()
 
+pygame.mouse.set_visible(False)
+
 # Utility Variables
 running = True
 counter = 0

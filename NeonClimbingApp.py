@@ -6,7 +6,6 @@ import python_weather
 from python_weather import enums
 import asyncio
 from aiohttp import client_exceptions
-import os
 import time
 import math
 
@@ -16,7 +15,7 @@ import math
 class App:
 
     # Coordinates
-    coordsHeader    = (110,     10)
+    coordsHeader    = (110,     20)
     coordsTime      = (1460,    5)
     coordsImage     = (1280,    150)
     coordsClimbIndex = (coordsImage[0] - 80, coordsImage[1])
@@ -24,7 +23,7 @@ class App:
     coordsCurrently = (coordsHeader[0] + 185,     195)
     coordsIcon      = (25,      coordsCurrently[1] + 5)
     coordsTemp      = (coordsIcon[0] + 255,           coordsIcon[1])
-    coordsHumidity  = (coordsTemp[0] + 475,     coordsTemp[1] + 30)
+    coordsHumidity  = (coordsTemp[0] + 475,     coordsTemp[1] + 25)
     coordsDewPoint  = (coordsHumidity[0],     coordsHumidity[1] + 65)
     coordsWind      = (coordsHumidity[0],     coordsDewPoint[1] + 65)
     coordsPrecip    = (coordsIcon[0] + 200,   coordsTemp[1] + 250)
@@ -82,6 +81,7 @@ class App:
         self.locations.append(Location("Willow River", "Hudson, WI", Location.imgWillow_1))
         self.locations.append(Location("Sandstone", "Sandstone, MN", Location.imgSandstone_1))
         self.locations.append(Location("Red Wing", "Red Wing, MN", Location.imgRedWing_1))
+        self.locations.append(Location("Taylors Falls", "Taylors Falls, MN", Location.imgTaylorsFalls_1))
         self.locations.append(Location("Rainy Lake", "International Falls, MN", Location.imgRainyLake_1))
         self.locations.append(Location("Devil's Lake", "Baraboo, WI", Location.imgDevilsLake_1))
         self.locations.append(Location("Red Rocks Canyon", "Las Vegas, NV", Location.imgRedRocks_1))
@@ -102,7 +102,7 @@ class App:
         if self.currentLocation >= Location.NUM_LOCATIONS:
             self.currentLocation = 0
 
-        self.locations[self.currentLocation].updateWeather()
+        # self.locations[self.currentLocation].updateWeather()
         self.iterateTimer = time.time()
         pass
 
@@ -121,8 +121,8 @@ class App:
         deltaTime = time.time() - self.weatherTimer
         if deltaTime > self.weatherUpdateFrequency:
             self.weatherTimer = time.time()
-            # for i in range(Location.NUM_LOCATIONS):
-            #     self.locations[i].updateWeather()
+            for i in range(Location.NUM_LOCATIONS):
+                 self.locations[i].updateWeather()
         pass
 
 
@@ -198,7 +198,7 @@ class App:
         # Draw Background
         tomLoc = App.coordsTomorrow
         rectBorder = (tomLoc[0]-165, tomLoc[1]-5, 1050, 415)
-        pygame.draw.rect(screen, color=self.colorBackground2, rect=rectBorder)
+        pygame.draw.rect(screen, self.colorBackground2, rectBorder)
 
         # Draw Tomorrow
         tomorrowDayOfWeek = self.weekdayFromIndex(location.tomorrow.date.weekday())
@@ -284,8 +284,8 @@ class App:
         rect = (App.coordsClimbIndex[0], y, App.sizeClimbIndex[0], App.sizeClimbIndex[1] - height)
         thickness = 10
         rectBorder = (rect[0]-thickness, App.coordsClimbIndex[1]-thickness, App.sizeClimbIndex[0]+615+2*thickness, App.sizeClimbIndex[1]+2*thickness)
-        pygame.draw.rect(screen, color=self.colorBackground2, rect=rectBorder)
-        pygame.draw.rect(screen, color=colorClimbIndex, rect=rect)
+        pygame.draw.rect(screen, self.colorBackground2, rectBorder)
+        pygame.draw.rect(screen, colorClimbIndex, rect)
 
         # Draw Climber Icon
         screen.blit(WeatherIcon.imgClimberIcon, (App.coordsClimbIndex[0], y))
@@ -340,15 +340,27 @@ class App:
         return time3pm.dew_point
 
 class Location:
-    WILLOW_RIVER = 0
-    SANDSTONE = 1
-    RED_WING = 2
-    RAINY_LAKE = 3
-    DEVILS_LAKE = 4
-    RED_ROCK_CANYON = 5
-    EL_POTRERO_CHICO = 6
-    FRANKENJURA = 7
-    NUM_LOCATIONS = 8
+    i = 0
+    WILLOW_RIVER = i
+    i += 1
+    SANDSTONE = i
+    i += 1
+    RED_WING = i
+    i += 1
+    TAYLORS_FALLS = i
+    i += 1
+    RAINY_LAKE = i
+    i += 1
+    DEVILS_LAKE = i
+    i += 1
+    RED_ROCK_CANYON = i
+    i += 1
+    EL_POTRERO_CHICO = i
+    i += 1
+    FRANKENJURA = i
+    i += 1
+    NUM_LOCATIONS = i
+
 
     imgSize = (600, 900)
     imgWillow_1 = pygame.transform.scale(pygame.image.load('Data/WillowRiver_1.JPG'), imgSize)
@@ -359,6 +371,7 @@ class Location:
     imgRedRocks_1 = pygame.transform.scale(pygame.image.load('Data/RedRocks_1.jpg'), imgSize)
     imgElPotreroChico_1 = pygame.transform.scale(pygame.image.load('Data/ElPotreroChico.jpg'), imgSize)
     imgFrankenjura_1 = pygame.transform.scale(pygame.transform.rotate(pygame.image.load('Data/Frankenjura_1.jpg'), -90), imgSize)
+    imgTaylorsFalls_1 = pygame.transform.scale(pygame.image.load('Data/TaylorsFalls.png'), imgSize)
 
 
     def __init__(self, name, weatherLocation, image):
@@ -385,7 +398,7 @@ class Location:
 
         self.climbingIndex = 0
 
-        # self.updateWeather()
+        self.updateWeather()
         pass
 
     def calculateClimbingIndex(self):
@@ -476,7 +489,7 @@ class Location:
         if dewPointScore > 100:
             dewPointScore = 100
 
-        print("{}: {}".format(x, dewPointScore))
+        # print("{}: {}".format(x, dewPointScore))
 
         return dewPointScore
 
