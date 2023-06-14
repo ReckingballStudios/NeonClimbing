@@ -17,6 +17,7 @@ class App:
     # Coordinates
     coordsHeader    = (110,     20)
     coordsTime      = (1460,    5)
+    coordsUpdating  = (coordsTime[0] - 80, coordsTime[1] + 60)
     coordsImage     = (1280,    150)
     coordsClimbIndex = (coordsImage[0] - 80, coordsImage[1])
 
@@ -64,6 +65,9 @@ class App:
         self.colorTempText = (255, 255, 255)
         self.colorBackground = (25, 25, 25)
         self.colorBackground2 = (12, 12, 12)
+
+        # App Conditions
+        self.updatingWeather = False
 
         # Locations Array
         self.currentLocation = Location.WILLOW_RIVER
@@ -119,10 +123,18 @@ class App:
 
         # Weather Update Timer
         deltaTime = time.time() - self.weatherTimer
-        if deltaTime > self.weatherUpdateFrequency:
+
+        # Timer has expired, therefore update weather
+        if self.updatingWeather:
             self.weatherTimer = time.time()
             for i in range(Location.NUM_LOCATIONS):
                  self.locations[i].updateWeather()
+            self.updatingWeather = False
+
+
+        # We want one frame to paint that it is updating weather
+        if deltaTime > self.weatherUpdateFrequency:
+            self.updatingWeather = True
         pass
 
 
@@ -131,6 +143,9 @@ class App:
         screen.fill(self.colorBackground)
         self.paintTime(screen)
         self.paintLocation(screen, location=self.locations[self.currentLocation])
+
+        if self.updatingWeather:
+            self.paintUpdatingWeather(screen)
         pass
 
     def paintTime(self, screen):
@@ -154,6 +169,9 @@ class App:
 
         # Write Temperature
         textTemperature = self.fontTemperature.render("{}°F".format(location.temperature), True, self.colorTempText)
+        if location.temperature >= 100:
+            textTemperature = self.fontTemperature.render("{}°".format(location.temperature), True, self.colorTempText)
+
         screen.blit(textTemperature, App.coordsTemp)
 
         # Write Humidity
@@ -294,6 +312,13 @@ class App:
         # screen.blit(text, App.coordsClimbIndex)
         pass
 
+    def paintUpdatingWeather(self, screen):
+        text = self.fontTime.render("Updating Weather : Please Wait", True, self.colorText)
+        screen.blit(text, App.coordsUpdating)
+
+        screen.blit(WeatherIcon.imgUpdatingIcon, (App.coordsUpdating[0] - 100, App.coordsUpdating[1] - 20))
+        pass
+
     def weekdayFromIndex(self, index):
         weekdays = \
             [
@@ -399,6 +424,8 @@ class Location:
         self.climbingIndex = 0
 
         self.updateWeather()
+
+
         pass
 
     def calculateClimbingIndex(self):
@@ -512,7 +539,12 @@ class Location:
             print("OS Error")
         except client_exceptions.ClientError:
             print("Client Error")
-        self.calculateClimbingIndex()
+
+        try:
+            self.calculateClimbingIndex()
+        except AttributeError:
+            print("Attribute Error")
+
         pass
 
     async def updateWeatherAsync(self):
@@ -564,6 +596,7 @@ class WeatherIcon:
             pygame.transform.scale(pygame.image.load('Data/Weather/LightRain.png'), (100, 100))
         ]
     imgClimberIcon = pygame.transform.scale(pygame.image.load('Data/climberIcon.png'), (72, 72))
+    imgUpdatingIcon = pygame.transform.scale(pygame.image.load('Data/refresh.png'), (80, 80))
 
     SUNNY = 0
     CLOUDY = 1
