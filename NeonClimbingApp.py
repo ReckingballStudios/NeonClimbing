@@ -169,7 +169,7 @@ class App:
 
         # Write Temperature
         textTemperature = self.fontTemperature.render("{}°F".format(location.temperature), True, self.colorTempText)
-        if location.temperature >= 100:
+        if location.temperature >= 100 or location.temperature <= -10:
             textTemperature = self.fontTemperature.render("{}°".format(location.temperature), True, self.colorTempText)
 
         screen.blit(textTemperature, App.coordsTemp)
