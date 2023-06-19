@@ -1,5 +1,5 @@
 # Application File
-
+import json.decoder
 
 import pygame
 import python_weather
@@ -8,7 +8,7 @@ import asyncio
 from aiohttp import client_exceptions
 import time
 import math
-
+from json import decoder
 
 
 
@@ -539,6 +539,8 @@ class Location:
             print("OS Error")
         except client_exceptions.ClientError:
             print("Client Error")
+        except json.decoder.JSONDecodeError:
+            print("JSON Error")
 
         try:
             self.calculateClimbingIndex()
