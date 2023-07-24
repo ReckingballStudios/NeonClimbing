@@ -8,58 +8,71 @@ import asyncio
 from aiohttp import client_exceptions
 import time
 import math
-from json import decoder
 
 
 
 class App:
 
-    # Coordinates
-    coordsHeader    = (110,     20)
-    coordsTime      = (1460,    5)
-    coordsUpdating  = (coordsTime[0] - 80, coordsTime[1] + 60)
-    coordsImage     = (1280,    150)
-    coordsClimbIndex = (coordsImage[0] - 80, coordsImage[1])
+    # Coordinates               X-Coordinate                    Y-Coordinate
+    coordsHeader            = (110,                             20)
+    coordsTime              = (1460,                            5)
+    coordsUpdating          = (coordsTime[0] - 80,              coordsTime[1] + 60)
+    coordsImage             = (1280,                            150)
+    coordsClimbIndex        = (coordsImage[0] - 80,             coordsImage[1])
 
-    coordsCurrently = (coordsHeader[0] + 185,     195)
-    coordsIcon      = (25,      coordsCurrently[1] + 5)
-    coordsTemp      = (coordsIcon[0] + 255,           coordsIcon[1])
-    coordsHumidity  = (coordsTemp[0] + 475,     coordsTemp[1] + 25)
-    coordsDewPoint  = (coordsHumidity[0],     coordsHumidity[1] + 65)
-    coordsWind      = (coordsHumidity[0],     coordsDewPoint[1] + 65)
-    coordsPrecip    = (coordsIcon[0] + 200,   coordsTemp[1] + 250)
-    coordsPrecipText = (coordsPrecip[0] + 100,   coordsPrecip[1] + 18)
-    coordsSunrise   = (coordsPrecip[0] + 280, coordsPrecip[1])
-    coordsSunriseText = (coordsSunrise[0] + 110, coordsSunrise[1] + 18)
-    coordsSunset    = (coordsSunrise[0] + 340, coordsPrecip[1])
-    coordsSunsetText = (coordsSunset[0] + 110, coordsSunset[1] + 18)
+    coordsCurrently         = (coordsHeader[0] + 185,           195)
+    coordsIcon              = (25,                              coordsCurrently[1] + 5)
+    coordsTemp              = (coordsIcon[0] + 255,             coordsIcon[1])
+    coordsHumidity          = (coordsTemp[0] + 475,             coordsTemp[1] + 25)
+    coordsDewPoint          = (coordsHumidity[0],               coordsHumidity[1] + 65)
+    coordsWind              = (coordsHumidity[0],               coordsDewPoint[1] + 65)
+    coordsPrecip            = (coordsIcon[0] + 200,             coordsTemp[1] + 250)
+    coordsPrecipText        = (coordsPrecip[0] + 100,           coordsPrecip[1] + 18)
+    coordsSunrise           = (coordsPrecip[0] + 280,           coordsPrecip[1])
+    coordsSunriseText       = (coordsSunrise[0] + 110,          coordsSunrise[1] + 18)
+    coordsSunset            = (coordsSunrise[0] + 340,          coordsPrecip[1])
+    coordsSunsetText        = (coordsSunset[0] + 110,           coordsSunset[1] + 18)
 
     # Future Forecast Coords
-    coordsTomorrow = (coordsIcon[0] + 225, coordsIcon[1] + 400)
-    coordsUbermorgen = (coordsTomorrow[0] + 525, coordsTomorrow[1])
-    coordsTomorrowIcon = (coordsTomorrow[0] - 100, coordsTomorrow[1] + 50)
-    coordsUbermorgenIcon = (coordsUbermorgen[0] - 100, coordsUbermorgen[1] + 50)
-    coordsTomorrowTemp = (coordsTomorrow[0] - 135, coordsTomorrow[1] + 270)
-    coordsUbermorgenTemp = (coordsUbermorgen[0] - 135, coordsUbermorgen[1] + 270)
-    coordsTomorrowPrecip = (coordsTomorrowIcon[0] + 260, coordsTomorrowIcon[1] + 20)
-    coordsUbermorgenPrecip = (coordsUbermorgenIcon[0] + 260, coordsUbermorgenIcon[1] + 30)
+    coordsTomorrow          = (coordsIcon[0] + 225,             coordsIcon[1] + 400)
+    coordsUbermorgen        = (coordsTomorrow[0] + 525,         coordsTomorrow[1])
+    coordsTomorrowIcon      = (coordsTomorrow[0] - 100,         coordsTomorrow[1] + 50)
+    coordsUbermorgenIcon    = (coordsUbermorgen[0] - 100,       coordsUbermorgen[1] + 50)
+    coordsTomorrowTemp      = (coordsTomorrow[0] - 135,         coordsTomorrow[1] + 270)
+    coordsUbermorgenTemp    = (coordsUbermorgen[0] - 135,       coordsUbermorgen[1] + 270)
+    coordsTomorrowPrecip    = (coordsTomorrowIcon[0] + 260,     coordsTomorrowIcon[1] + 20)
+    coordsUbermorgenPrecip  = (coordsUbermorgenIcon[0] + 260,   coordsUbermorgenIcon[1] + 30)
 
 
     sizeClimbIndex = (72, 900)
 
-    weatherUpdateFrequency = 900
+    weatherUpdateFrequency = 1800
     iterateScreenFrequency = 60
 
     # Initialize
     def __init__(self):
 
         # Font and Text initialization
-        self.fontTemperature = pygame.font.SysFont('timesnewroman', int(230))
-        self.fontTempSmall = pygame.font.SysFont('timesnewroman', int(90))
-        self.fontHeader = pygame.font.SysFont('timesnewroman', int(140))
-        self.fontCurrently = pygame.font.SysFont('timesnewroman', int(80))
-        self.fontInfo = pygame.font.SysFont('timesnewroman', int(55))
-        self.fontTime = pygame.font.SysFont('timesnewroman', int(40))
+        self.fontTemperature = pygame.font.SysFont  ('timesnewroman', int(230))
+        self.fontTempSmall = pygame.font.SysFont    ('timesnewroman', int(90))
+        self.fontHeader = pygame.font.SysFont       ('timesnewroman', int(140))
+        self.fontCurrently = pygame.font.SysFont    ('timesnewroman', int(80))
+        self.fontInfo = pygame.font.SysFont         ('timesnewroman', int(55))
+        self.fontTime = pygame.font.SysFont         ('timesnewroman', int(40))
+        #
+        # self.fontTemperature = pygame.font.SysFont  ('arial', int(230))
+        # self.fontTempSmall = pygame.font.SysFont    ('arial', int(90))
+        # self.fontHeader = pygame.font.SysFont       ('arial', int(140))
+        # self.fontCurrently = pygame.font.SysFont    ('arial', int(80))
+        # self.fontInfo = pygame.font.SysFont         ('arial', int(55))
+        # self.fontTime = pygame.font.SysFont         ('arial', int(40))
+
+        # self.fontTemperature = pygame.font.SysFont  ('gotham', int(290  ))
+        # self.fontTempSmall = pygame.font.SysFont    ('gotham', int(115   ))
+        # self.fontHeader = pygame.font.SysFont       ('gotham', int(175  ))
+        # self.fontCurrently = pygame.font.SysFont    ('gotham', int(100   ))
+        # self.fontInfo = pygame.font.SysFont         ('gotham', int(75   ))
+        # self.fontTime = pygame.font.SysFont         ('gotham', int(50   ))
 
         self.colorText = (235, 235, 235)
         self.colorTempText = (255, 255, 255)
@@ -96,8 +109,23 @@ class App:
 
     # Handle Mouse / Touch Inputs from user
     def handleMouse(self, event):
-        if event.type == pygame.MOUSEBUTTONUP:
+        time.sleep(0.1)
+        touchX = pygame.mouse.get_pos()[0]
+
+        if event.type == pygame.MOUSEBUTTONUP and touchX < 960:
+            self.decrementLocation()
+        elif event.type == pygame.MOUSEBUTTONUP and touchX >= 960:
             self.iterateLocation()
+        pass
+
+    def decrementLocation(self):
+        # Go to the previous location
+        self.currentLocation -= 1
+        if self.currentLocation < 0:
+            self.currentLocation = Location.NUM_LOCATIONS - 1
+
+        # self.locations[self.currentLocation].updateWeather()
+        self.iterateTimer = time.time()
         pass
 
     def iterateLocation(self):
@@ -616,4 +644,3 @@ class WeatherIcon:
     SUNSET = 13
     RAIN_SMALL = 14
     NUM_WEATHER_ICONS = 15
-
