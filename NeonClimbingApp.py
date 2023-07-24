@@ -109,7 +109,6 @@ class App:
 
     # Handle Mouse / Touch Inputs from user
     def handleMouse(self, event):
-        time.sleep(0.1)
         touchX = pygame.mouse.get_pos()[0]
 
         if event.type == pygame.MOUSEBUTTONUP and touchX < 960:
@@ -489,7 +488,7 @@ class Location:
 
     def calculateTemperatureScore(self):
         if self.temperature < 0 or self.temperature > 103:
-            return -100
+            return -20
 
 
         x = self.temperature

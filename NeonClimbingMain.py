@@ -11,7 +11,50 @@ pygame.init()
 screen = NeonClimbingScreen.Screen(1920, 1080, 60)
 app = NeonClimbingApp.App()
 
-pygame.mouse.set_visible(False)
+
+
+# Making an invisible cursor
+custom_cursor_data = [
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                ",
+    "                                "
+]
+# Create a cursor with the custom cursor data.
+custom_cursor, custom_cursor_mask = pygame.cursors.compile(custom_cursor_data, black='X', white='.', xor='o')
+# Set the custom cursor.
+pygame.mouse.set_cursor((32, 32), (0, 0), custom_cursor, custom_cursor_mask)
+
+# NOTE! v- mouse.set_visible(False) produces a bug in the RaspberryPi version
+# pygame.mouse.set_visible(False)
 
 # Utility Variables
 running = True
