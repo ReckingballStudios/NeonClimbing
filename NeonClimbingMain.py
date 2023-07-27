@@ -12,7 +12,6 @@ screen = NeonClimbingScreen.Screen(1920, 1080, 60)
 app = NeonClimbingApp.App()
 
 
-
 # Making an invisible cursor
 custom_cursor_data = [
     "                                ",
