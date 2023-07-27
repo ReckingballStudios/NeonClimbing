@@ -468,14 +468,16 @@ class Location:
         self.climbingIndex = (.40 * temperatureScore) + (.15 * humidityScore) + (.30 * dewPointScore) + (.15 * windScore)
 
         if self.weatherKind == enums.Kind.SUNNY:
-            self.climbingIndex += 2
+            self.climbingIndex += 5
         elif self.weatherKind == enums.Kind.PARTLY_CLOUDY:
-            self.climbingIndex += 4
+            self.climbingIndex += 8
         elif self.weatherKind == enums.Kind.CLOUDY:
-            self.climbingIndex += 3
+            self.climbingIndex += 6
         elif self.weatherKind == enums.Kind.VERY_CLOUDY:
-            self.climbingIndex += 3
+            self.climbingIndex += 5
 
+
+        self.climbingIndex += 12
         self.climbingIndex = self.climbingIndex - self.chanceOfRain
 
         # Validation, 8 is lowest so picture still displays, and bar is visible
