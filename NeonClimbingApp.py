@@ -46,7 +46,7 @@ class App:
 
     sizeClimbIndex = (72, 900)
 
-    weatherUpdateFrequency = 1800
+    weatherUpdateFrequency = 3600
     iterateScreenFrequency = 60
 
     # Initialize

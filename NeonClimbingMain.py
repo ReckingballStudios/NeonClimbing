@@ -60,16 +60,16 @@ running = True
 counter = 0
 
 # watchdog timer
-watchdogTimeout = 120
-watchdog = WatchdogTimer(watchdogTimeout)
-iteration = 0
-watchdogFrameReset = 1800
+# watchdogTimeout = 120
+# watchdog = WatchdogTimer(watchdogTimeout)
+# iteration = 0
+# watchdogFrameReset = 1800
 
 
 while running:
     # Start watchdog at beginning of frame
-    if iteration == 0:
-        watchdog.start()
+    # if iteration == 0:
+    #     watchdog.start()
 
 
     # Handle User Input    
@@ -94,11 +94,11 @@ while running:
     pygame.display.update()
     screen.fpsClock.tick(60)
 
-    iteration += 1
-    # Reset Watchdog at end of frame
-    if iteration == watchdogFrameReset:
-        watchdog.stop()
-        iteration = 0
+    # iteration += 1
+    # # Reset Watchdog at end of frame
+    # if iteration == watchdogFrameReset:
+    #     watchdog.stop()
+    #     iteration = 0
 
 
 # end while
