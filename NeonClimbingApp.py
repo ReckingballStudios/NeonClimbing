@@ -563,13 +563,16 @@ class Location:
         try:
             asyncio.run(self.updateWeatherAsync())
         except client_exceptions.ClientConnectorError:
-            print("Connection Error")
+            print("Updating Weather Connection Error")
         except client_exceptions.ClientOSError:
-            print("OS Error")
+            print("Updating Weather OS Error")
         except client_exceptions.ClientError:
-            print("Client Error")
+            print("Updating Weather Client Error")
         except json.decoder.JSONDecodeError:
-            print("JSON Error")
+            print("Updating Weather JSON Error")
+        except RuntimeError:
+            print("Updating Weather Runtime Error")
+
 
         try:
             self.calculateClimbingIndex()
