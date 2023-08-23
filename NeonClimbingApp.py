@@ -572,6 +572,8 @@ class Location:
             print("Updating Weather JSON Error")
         except RuntimeError:
             print("Updating Weather Runtime Error")
+        except TimeoutError:
+            print("Updating Weather Timeout Error")
 
 
         try:
