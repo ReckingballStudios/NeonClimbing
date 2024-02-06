@@ -489,21 +489,26 @@ class Location:
         pass
 
     def calculateTemperatureScore(self):
-        if self.temperature < 0 or self.temperature > 103:
-            return -20
+        if self.temperature < 32 or self.temperature > 103:
+            return -100
 
 
         x = self.temperature
         # Formula derived from interpolation
-        temperatureScore =      0.00000016765 * math.pow(x, 5)
-        temperatureScore +=    -0.000031609 * math.pow(x, 4)
-        temperatureScore +=     0.0012482 * math.pow(x, 3)
-        temperatureScore +=     0.015440 * math.pow(x, 2)
-        temperatureScore +=     0.91796 * x
+        temperatureScore  =       -0.00000014818 * math.pow(x, 6)
+        temperatureScore +=        0.000058071   * math.pow(x, 5)
+        temperatureScore +=       -0.0092341     * math.pow(x, 4)
+        temperatureScore +=        0.76371       * math.pow(x, 3)
+        temperatureScore +=       -34.862        * math.pow(x, 2)
+        temperatureScore +=        843.12        * math.pow(x, 1)
+        temperatureScore +=       -8513.2
+
+
+        # print("temp: {}, score: {}".format(x, temperatureScore))
 
         # Remain within 0 - 100 bounds
-        if temperatureScore < 0:
-            temperatureScore = 0
+        if temperatureScore < -100:
+            temperatureScore = -100
         if temperatureScore > 100:
             temperatureScore = 100
 
