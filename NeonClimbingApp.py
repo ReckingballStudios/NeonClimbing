@@ -22,11 +22,11 @@ class App:
     coordsClimbIndex        = (coordsImage[0] - 80,             coordsImage[1])
 
     coordsCurrently         = (coordsHeader[0] + 185,           195)
-    coordsIcon              = (25,                              coordsCurrently[1] + 5)
+    coordsIcon              = (25,                              coordsCurrently[1])
     coordsTemp              = (coordsIcon[0] + 255,             coordsIcon[1])
-    coordsHiLo              = (coordsTemp[0] + 475, coordsTemp[1] + 25)
-    coordsDewPoint          = (coordsHiLo[0], coordsHiLo[1] + 65)
-    coordsWind              = (coordsHiLo[0], coordsDewPoint[1] + 65)
+    coordsHiLo              = (coordsTemp[0] + 480,             coordsTemp[1] + 35)
+    coordsDewPoint          = (coordsHiLo[0],                   coordsHiLo[1] + 65)
+    coordsWind              = (coordsHiLo[0],                   coordsDewPoint[1] + 65)
     coordsPrecip            = (coordsIcon[0] + 200,             coordsTemp[1] + 250)
     coordsPrecipText        = (coordsPrecip[0] + 100,           coordsPrecip[1] + 18)
     coordsSunrise           = (coordsPrecip[0] + 280,           coordsPrecip[1])
@@ -166,7 +166,6 @@ class App:
         pass
 
 
-
     def paint(self, screen):
         screen.fill(self.colorBackground)
         self.paintTime(screen)
@@ -175,6 +174,7 @@ class App:
         if self.updatingWeather:
             self.paintUpdatingWeather(screen)
         pass
+
 
     def paintTime(self, screen):
         text = self.fontTime.render("{}".format(time.ctime()), True, self.colorText)
@@ -292,26 +292,28 @@ class App:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.SUNNY]
         elif weather == enums.Kind.PARTLY_CLOUDY.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.PARTLY_CLOUDY]
-        elif weather == enums.Kind.CLOUDY.value or weather == enums.Kind.FOG.value:
+        elif weather == enums.Kind.CLOUDY.value or weather == enums.Kind.FOG.value or weather in [248, 260]:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.CLOUDY]
         elif weather == enums.Kind.VERY_CLOUDY.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.VERY_CLOUDY]
-        elif weather == enums.Kind.LIGHT_SHOWERS.value:
+        elif weather == enums.Kind.LIGHT_SHOWERS.value or weather in [353]:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.LIGHT_SHOWERS]
         elif weather == enums.Kind.LIGHT_SLEET.value or weather == enums.Kind.LIGHT_SLEET_SHOWERS.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.SNOWY]
-        elif weather == enums.Kind.THUNDERY_SHOWERS.value:
+        elif weather == enums.Kind.THUNDERY_SHOWERS.value or weather in [200, 386, 389, 392, 395]:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.THUNDERY_SHOWERS]
-        elif weather == enums.Kind.LIGHT_SNOW.value or weather == enums.Kind.HEAVY_SNOW.value:
+        elif weather == enums.Kind.LIGHT_SNOW.value or weather == enums.Kind.HEAVY_SNOW.value or weather in [227, 230, 323, 326, 329, 332, 335, 338]:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.SNOWY]
-        elif weather == enums.Kind.LIGHT_RAIN.value:
+        elif weather == enums.Kind.LIGHT_RAIN.value or weather in [263, 266, 293, 296]:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.LIGHT_RAIN]
-        elif weather == enums.Kind.HEAVY_SHOWERS.value or weather == enums.Kind.HEAVY_RAIN.value:
+        elif weather == enums.Kind.HEAVY_SHOWERS.value or weather == enums.Kind.HEAVY_RAIN.value or weather in [299, 302, 305, 308]:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.HEAVY_RAIN]
         elif weather == enums.Kind.LIGHT_SNOW_SHOWERS.value or weather == enums.Kind.HEAVY_SNOW_SHOWERS.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.MIX]
         elif weather == enums.Kind.THUNDERY_HEAVY_RAIN.value or weather == enums.Kind.THUNDERY_SNOW_SHOWERS.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.THUNDERSTORMS]
+        else:
+            print(f"Weather Icon Code Invalid: {weather}")
 
         screen.blit(icon, coords)
         pass
@@ -381,14 +383,15 @@ class App:
 
     @staticmethod
     def calculateChanceOfRain(weatherFromThatDay):
-        total = 0
+        highestChance = 0
 
         # starting at index 3 (6am) ending at index 7 (9pm)
         for i in range(3, 7):
-            total += int(weatherFromThatDay["hourly"][i]["chanceofrain"])
+            chance = int(weatherFromThatDay["hourly"][i]["chanceofrain"])
+            if chance > highestChance:
+                highestChance = chance
 
-        chance = total / 4
-        return chance
+        return highestChance
 
 class Location:
     i = 0
@@ -470,19 +473,25 @@ class Location:
 
         windScore = self.calculateWindScore()
 
-        self.climbingIndex = (.40 * temperatureScore) + (.10 * humidityScore) + (.35 * dewPointScore) + (.15 * windScore)
+        self.climbingIndex = (.45 * temperatureScore) + (.20 * humidityScore) + (.20 * dewPointScore) + (.15 * windScore)
 
-        if self.weatherKind == enums.Kind.SUNNY:
+        if self.weatherKind == enums.Kind.SUNNY.value:
             self.climbingIndex += 5
-        elif self.weatherKind == enums.Kind.PARTLY_CLOUDY:
-            self.climbingIndex += 8
-        elif self.weatherKind == enums.Kind.CLOUDY:
+        elif self.weatherKind == enums.Kind.PARTLY_CLOUDY.value:
+            self.climbingIndex += 7
+        elif self.weatherKind == enums.Kind.CLOUDY.value:
             self.climbingIndex += 6
-        elif self.weatherKind == enums.Kind.VERY_CLOUDY:
+        elif self.weatherKind == enums.Kind.VERY_CLOUDY.value:
             self.climbingIndex += 5
 
+        # General boost to the Climbing Index score
+        self.climbingIndex += 5
 
-        self.climbingIndex += 12
+        # If you found this then you got me. I'm biased, what can I say
+        if self.name == "Willow River":
+            self.climbingIndex += 2
+
+        # We don't like rain
         self.climbingIndex = self.climbingIndex - self.chanceOfRain
 
         # Validation, 8 is lowest so picture still displays, and bar is visible
@@ -494,24 +503,36 @@ class Location:
         pass
 
     def calculateTemperatureScore(self):
-        if self.temperature < 32 or self.temperature > 103:
+        if self.temperature < 0 or self.temperature > 100:
             return -100
 
-
         x = self.temperature
-        # Formula derived from interpolation
-        temperatureScore  =       -0.00000014818 * math.pow(x, 6)
-        temperatureScore +=        0.000058071   * math.pow(x, 5)
-        temperatureScore +=       -0.0092341     * math.pow(x, 4)
-        temperatureScore +=        0.76371       * math.pow(x, 3)
-        temperatureScore +=       -34.862        * math.pow(x, 2)
-        temperatureScore +=        843.12        * math.pow(x, 1)
-        temperatureScore +=       -8513.2
 
+        # Formula derived from interpolation
+        # temperatureScore  =   1.5873 * math.pow(10, -9) * math.pow(x, 7)
+        # temperatureScore +=  -7.8968 * math.pow(10, -7) * math.pow(x, 6)
+        # temperatureScore +=   1.6052 * math.pow(10, -4) * math.pow(x, 5)
+        # temperatureScore +=  -1.7224 * math.pow(10, -2) * math.pow(x, 4)
+        # temperatureScore +=   1.0485 * math.pow(10,  0) * math.pow(x, 3)
+        # temperatureScore +=  -3.6070 * math.pow(10,  1) * math.pow(x, 2)
+        # temperatureScore +=   6.5155 * math.pow(10,  2) * math.pow(x, 1)
+        # temperatureScore +=  -4.8000 * math.pow(10,  3)
+
+        # Horner's Method for the interpolated polynomial function
+        temperatureScore = int(
+                ((((((1.587301587301587301587301587301587301587301587301587301508619546e-9 * x
+                      - 7.89682539682539682539682539682539682539682539682539682507312352e-7) * x
+                     + 1.605158730158730158730158730158730158730158730158730158675234314e-4) * x
+                    - 1.722420634920634920634920634920634920634920634920634920585300265e-2) * x
+                   + 1.048456349206349206349206349206349206349206349206349206323544646) * x
+                  - 36.06968253968253968253968253968253968253968253968253968178346568) * x
+                 + 651.5476190476190476190476190476190476190476190476190476073392221) * x
+                - 4800.0
+        )
 
         # print("temp: {}, score: {}".format(x, temperatureScore))
 
-        # Remain within 0 - 100 bounds
+        # Remain within -100 | +100 bounds
         if temperatureScore < -100:
             temperatureScore = -100
         if temperatureScore > 100:
@@ -523,49 +544,60 @@ class Location:
         x = self.humidity
 
         # Derive our polynomial from interpolation
-        humidityScore =     -0.000018353 * math.pow(x, 4)
-        humidityScore +=     0.0040823 * math.pow(x, 3)
-        humidityScore +=    -0.31230 * math.pow(x, 2)
-        humidityScore +=     8.5099 * x
-        humidityScore +=     25
+        # humidityScore =     -0.000018353 * math.pow(x, 4)
+        # humidityScore +=     0.0040823 * math.pow(x, 3)
+        # humidityScore +=    -0.31230 * math.pow(x, 2)
+        # humidityScore +=     8.5099 * x
+        # humidityScore +=     25
+
+        # Horner's Method for our Polynomial Interpolation
+        humidityScore = int(
+                (((-0.000018353 * x
+                   + 0.0040823) * x
+                  - 0.31230) * x
+                 + 8.5099) * x
+                + 25
+        )
 
         if humidityScore < 0:
             humidityScore = 0
         if humidityScore > 100:
             humidityScore = 100
 
+        # print("Humidity {}: {}".format(x, humidityScore))
+
         return humidityScore
 
     def calculateDewPointScore(self):
         dewPoint = self.dewPoint
-        if dewPoint > 75 or dewPoint < -8:
-            return 0
-
         x = dewPoint
+
         # Our Polynomial Function derived from interpolation
-        dewPointScore =     0.00000026936 * math.pow(x, 5)
-        dewPointScore +=   -0.000034728 * math.pow(x, 4)
-        dewPointScore +=    0.0016441 * math.pow(x, 3)
-        dewPointScore +=   -0.10873 * math.pow(x, 2)
-        dewPointScore +=    4.5017 * x
-        dewPointScore +=    40
+        dewPointScore = int(
+                (-0.08236208236208236 * x
+                 + 6.674436674436674) * x
+                - 33.566433566433566
+        )
 
         if dewPointScore < 0:
             dewPointScore = 0
         if dewPointScore > 100:
             dewPointScore = 100
 
-        # print("{}: {}".format(x, dewPointScore))
+        # print("Dew Point {}: {}".format(x, dewPointScore))
 
         return dewPointScore
 
     def calculateWindScore(self):
-        windScore = 100 - (10 * math.fabs(10 - self.windSpeed))
+        x = self.windSpeed
+        windScore = int(((-0.006393298059964714 * x - 0.31172839506172894) * x + 6.781084656084661) * x + 69)
 
         if windScore < 0:
             windScore = 0
         if windScore > 100:
             windScore = 100
+
+        # print("Wind Speed {}: {}".format(x, windScore))
 
         return windScore
 
