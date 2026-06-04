@@ -3,6 +3,7 @@ import json.decoder
 
 import pygame
 import python_weather
+from datetime import datetime
 from python_weather import enums
 import asyncio
 from aiohttp import client_exceptions
@@ -23,9 +24,9 @@ class App:
     coordsCurrently         = (coordsHeader[0] + 185,           195)
     coordsIcon              = (25,                              coordsCurrently[1] + 5)
     coordsTemp              = (coordsIcon[0] + 255,             coordsIcon[1])
-    coordsHumidity          = (coordsTemp[0] + 475,             coordsTemp[1] + 25)
-    coordsDewPoint          = (coordsHumidity[0],               coordsHumidity[1] + 65)
-    coordsWind              = (coordsHumidity[0],               coordsDewPoint[1] + 65)
+    coordsHiLo              = (coordsTemp[0] + 475, coordsTemp[1] + 25)
+    coordsDewPoint          = (coordsHiLo[0], coordsHiLo[1] + 65)
+    coordsWind              = (coordsHiLo[0], coordsDewPoint[1] + 65)
     coordsPrecip            = (coordsIcon[0] + 200,             coordsTemp[1] + 250)
     coordsPrecipText        = (coordsPrecip[0] + 100,           coordsPrecip[1] + 18)
     coordsSunrise           = (coordsPrecip[0] + 280,           coordsPrecip[1])
@@ -46,8 +47,8 @@ class App:
 
     sizeClimbIndex = (72, 900)
 
-    weatherUpdateFrequency = 3600
-    iterateScreenFrequency = 60
+    weatherUpdateFrequency = 3600   # 3600 = 1 hour
+    iterateScreenFrequency = 60     # 60 = 1 minute
 
     # Initialize
     def __init__(self):
@@ -202,15 +203,15 @@ class App:
         screen.blit(textTemperature, App.coordsTemp)
 
         # Write Humidity
-        textHumidity = self.fontInfo.render("{}% Humidity".format(location.humidity), True, self.colorText)
-        screen.blit(textHumidity, App.coordsHumidity)
+        textHighLow = self.fontInfo.render("{}°F | {}°F".format(location.high, location.low), True, self.colorText)
+        screen.blit(textHighLow, App.coordsHiLo)
 
         # Write Dew Point
         textDewPoint = self.fontInfo.render("{}°F Dew Point".format(location.dewPoint), True, self.colorText)
         screen.blit(textDewPoint, App.coordsDewPoint)
 
         # Write Wind
-        textWind = self.fontInfo.render("{} MPH {}".format(location.windSpeed, location.windDir.value), True, self.colorText)
+        textWind = self.fontInfo.render("{} MPH {}".format(location.windSpeed, location.windDir), True, self.colorText)
         screen.blit(textWind, App.coordsWind)
 
         # Draw Precipitation
@@ -246,15 +247,15 @@ class App:
         pygame.draw.rect(screen, self.colorBackground2, rectBorder)
 
         # Draw Tomorrow
-        tomorrowDayOfWeek = self.weekdayFromIndex(location.tomorrow.date.weekday())
+        tomorrowDayOfWeek = App.weekdayFromDate(location.tomorrow["date"])
         text = self.fontInfo.render("{dow:}".format(dow=tomorrowDayOfWeek), True, self.colorText)
         screen.blit(text, App.coordsTomorrow)
 
         # Draw Tomorrows Weather Icon
-        self.paintWeatherIcon(screen, self.deriveWeatherKind(location.tomorrow), App.coordsTomorrowIcon)
+        self.paintWeatherIcon(screen, int(location.tomorrow["hourly"][5]["weatherCode"]), App.coordsTomorrowIcon)
 
         # Draw Tomorrows High
-        string = "{hi:}°F | {low:}°F".format(hi=location.tomorrow.highest_temperature, low=location.tomorrow.lowest_temperature)
+        string = "{hi:}°F | {low:}°F".format(hi=location.tomorrow["maxtempF"], low=location.tomorrow["mintempF"])
         text = self.fontTempSmall.render(string, True, self.colorText)
         screen.blit(text, App.coordsTomorrowTemp)
 
@@ -265,15 +266,15 @@ class App:
         screen.blit(text, (App.coordsTomorrowPrecip[0]+15, App.coordsTomorrowPrecip[1]+90))
 
         # Draw Ubermorgen
-        ubermorgenDayOfWeek = self.weekdayFromIndex(location.ubermorgen.date.weekday())
+        ubermorgenDayOfWeek = App.weekdayFromDate(location.ubermorgen["date"])
         text = self.fontInfo.render("{}".format(ubermorgenDayOfWeek), True, self.colorText)
         screen.blit(text, App.coordsUbermorgen)
 
         # Draw Ubermorgens Weather Icon
-        self.paintWeatherIcon(screen, self.deriveWeatherKind(location.ubermorgen), App.coordsUbermorgenIcon)
+        self.paintWeatherIcon(screen, int(location.ubermorgen["hourly"][5]["weatherCode"]), App.coordsUbermorgenIcon)
 
         # Draw Ubermorgens High
-        string = "{hi:}°F | {low:}°F".format(hi=location.ubermorgen.highest_temperature, low=location.ubermorgen.lowest_temperature)
+        string = "{hi:}°F | {low:}°F".format(hi=location.ubermorgen["maxtempF"], low=location.ubermorgen["mintempF"])
         text = self.fontTempSmall.render(string, True, self.colorText)
         screen.blit(text, App.coordsUbermorgenTemp)
 
@@ -281,35 +282,35 @@ class App:
         screen.blit(WeatherIcon.imgWeatherIcon[WeatherIcon.RAIN_SMALL], App.coordsUbermorgenPrecip)
         precipitationChance = location.ubermorgenChanceOfRain
         text = self.fontInfo.render("{chance:}%".format(chance=int(precipitationChance)), True, self.colorText)
-        screen.blit(text, (App.coordsUbermorgenPrecip[0]+ 15, App.coordsUbermorgenPrecip[1] + 90))
+        screen.blit(text, (App.coordsUbermorgenPrecip[0] + 15, App.coordsUbermorgenPrecip[1] + 90))
         pass
 
     def paintWeatherIcon(self, screen, weather, coords):
         icon = WeatherIcon.imgWeatherIcon[WeatherIcon.UNKNOWN]
 
-        if weather == enums.Kind.SUNNY:
+        if weather == enums.Kind.SUNNY.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.SUNNY]
-        elif weather == enums.Kind.PARTLY_CLOUDY:
+        elif weather == enums.Kind.PARTLY_CLOUDY.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.PARTLY_CLOUDY]
-        elif weather == enums.Kind.CLOUDY or weather == enums.Kind.FOG:
+        elif weather == enums.Kind.CLOUDY.value or weather == enums.Kind.FOG.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.CLOUDY]
-        elif weather == enums.Kind.VERY_CLOUDY:
+        elif weather == enums.Kind.VERY_CLOUDY.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.VERY_CLOUDY]
-        elif weather == enums.Kind.LIGHT_SHOWERS:
+        elif weather == enums.Kind.LIGHT_SHOWERS.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.LIGHT_SHOWERS]
-        elif weather == enums.Kind.LIGHT_SLEET or weather == enums.Kind.LIGHT_SLEET_SHOWERS:
+        elif weather == enums.Kind.LIGHT_SLEET.value or weather == enums.Kind.LIGHT_SLEET_SHOWERS.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.SNOWY]
-        elif weather == enums.Kind.THUNDERY_SHOWERS:
+        elif weather == enums.Kind.THUNDERY_SHOWERS.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.THUNDERY_SHOWERS]
-        elif weather == enums.Kind.LIGHT_SNOW or weather == enums.Kind.HEAVY_SNOW:
+        elif weather == enums.Kind.LIGHT_SNOW.value or weather == enums.Kind.HEAVY_SNOW.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.SNOWY]
-        elif weather == enums.Kind.LIGHT_RAIN:
+        elif weather == enums.Kind.LIGHT_RAIN.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.LIGHT_RAIN]
-        elif weather == enums.Kind.HEAVY_SHOWERS or weather == enums.Kind.HEAVY_RAIN:
+        elif weather == enums.Kind.HEAVY_SHOWERS.value or weather == enums.Kind.HEAVY_RAIN.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.HEAVY_RAIN]
-        elif weather == enums.Kind.LIGHT_SNOW_SHOWERS or weather == enums.Kind.HEAVY_SNOW_SHOWERS:
+        elif weather == enums.Kind.LIGHT_SNOW_SHOWERS.value or weather == enums.Kind.HEAVY_SNOW_SHOWERS.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.MIX]
-        elif weather == enums.Kind.THUNDERY_HEAVY_RAIN or weather == enums.Kind.THUNDERY_SNOW_SHOWERS:
+        elif weather == enums.Kind.THUNDERY_HEAVY_RAIN.value or weather == enums.Kind.THUNDERY_SNOW_SHOWERS.value:
             icon = WeatherIcon.imgWeatherIcon[WeatherIcon.THUNDERSTORMS]
 
         screen.blit(icon, coords)
@@ -346,50 +347,48 @@ class App:
         screen.blit(WeatherIcon.imgUpdatingIcon, (App.coordsUpdating[0] - 100, App.coordsUpdating[1] - 20))
         pass
 
-    def weekdayFromIndex(self, index):
-        weekdays = \
-            [
-                "Mon",
-                "Tue",
-                "Wed",
-                "Thu",
-                "Fri",
-                "Sat",
-                "Sun"
-            ]
-        return weekdays[index]
+    @staticmethod
+    def weekdayFromDate(date):
+
+        dateObject = datetime.strptime(date, "%Y-%m-%d")
+
+        dayName = dateObject.strftime("%a")
+
+        return dayName
 
     @staticmethod
-    def deriveChanceOfRain(dailyForecast):
-        chance = 0
-        hourlyForecast = iter(dailyForecast.hourly)
+    def calculateDewPoint(temperature, humidity):
 
-        # Note: hourlyForecast is actually every 3 hours
-        for i in range(8):
-            hourly = next(hourlyForecast)
-            if i >= 4:
-                chance += hourly.chances_of_rain
+        # Assure the natural log is not undefined
+        if humidity < 1:
+            humidity = 1
 
-        chance /= 4
+        temperatureCelsius = (temperature - 32) * 5 / 9
+
+        # Magnus-Tetens formula
+        MAGNUS_A = 17.27
+        MAGNUS_B = 237.7
+
+        # Derive the intermediate variable
+        alpha = ((MAGNUS_A * temperatureCelsius) / (MAGNUS_B + temperatureCelsius) + math.log(humidity / 100.0))
+
+        # Calculate the Dew Point
+        dewPointCelsius = (MAGNUS_B * alpha) / (MAGNUS_A - alpha)
+
+
+        dewPointFahrenheit = (dewPointCelsius * 9 / 5) + 32
+        return int(dewPointFahrenheit)
+
+    @staticmethod
+    def calculateChanceOfRain(weatherFromThatDay):
+        total = 0
+
+        # starting at index 3 (6am) ending at index 7 (9pm)
+        for i in range(3, 7):
+            total += int(weatherFromThatDay["hourly"][i]["chanceofrain"])
+
+        chance = total / 4
         return chance
-
-    @staticmethod
-    def deriveWeatherKind(dailyForecast):
-        hourlyForecast = iter(dailyForecast.hourly)
-        for i in range(5):
-            next(hourlyForecast)
-
-        time3pm = next(hourlyForecast)
-        return time3pm.kind
-
-    @staticmethod
-    def deriveDewPoint(dailyForecast):
-        hourlyForecast = iter(dailyForecast.hourly)
-        for i in range(5):
-            next(hourlyForecast)
-
-        time3pm = next(hourlyForecast)
-        return time3pm.dew_point
 
 class Location:
     i = 0
@@ -427,10 +426,16 @@ class Location:
 
 
     def __init__(self, name, weatherLocation, image):
+
+        # Initialized from parameters
         self.name = name
         self.weatherLocation = weatherLocation
         self.image = image
+
+        # Initialized from the update weather function
         self.temperature = 999
+        self.high = 999
+        self.low = 999
         self.humidity = 999
         self.dewPoint = 999
         self.windSpeed = 999
@@ -439,7 +444,7 @@ class Location:
         self.chanceOfRain = 999
         self.sunrise = "NA"
         self.sunset = "NA"
-        self.weatherKind = "NA"
+        self.weatherKind = 999
         self.forecast = 0
         self.today = 0
         self.tomorrow = 0
@@ -447,7 +452,7 @@ class Location:
         self.tomorrowChanceOfRain = 0
         self.ubermorgenChanceOfRain = 0
 
-
+        # Derived from the Climbing Index Algorithm
         self.climbingIndex = 0
 
         self.updateWeather()
@@ -465,7 +470,7 @@ class Location:
 
         windScore = self.calculateWindScore()
 
-        self.climbingIndex = (.40 * temperatureScore) + (.15 * humidityScore) + (.30 * dewPointScore) + (.15 * windScore)
+        self.climbingIndex = (.40 * temperatureScore) + (.10 * humidityScore) + (.35 * dewPointScore) + (.15 * windScore)
 
         if self.weatherKind == enums.Kind.SUNNY:
             self.climbingIndex += 5
@@ -532,7 +537,7 @@ class Location:
         return humidityScore
 
     def calculateDewPointScore(self):
-        dewPoint = App.deriveDewPoint(self.today)
+        dewPoint = self.dewPoint
         if dewPoint > 75 or dewPoint < -8:
             return 0
 
@@ -571,8 +576,8 @@ class Location:
             print("Updating Weather Connection Error")
         except client_exceptions.ClientOSError:
             print("Updating Weather OS Error")
-        except client_exceptions.ClientError:
-            print("Updating Weather Client Error")
+        except client_exceptions.ClientError as e:
+            print(f"Updating Weather Client Error: {e}")
         except json.decoder.JSONDecodeError:
             print("Updating Weather JSON Error")
         except RuntimeError:
@@ -589,31 +594,40 @@ class Location:
         pass
 
     async def updateWeatherAsync(self):
-        async with python_weather.Client(unit=python_weather.IMPERIAL) as client:
-            weather = await client.get(self.weatherLocation)
-            self.temperature = weather.current.temperature
-            self.humidity = weather.current.humidity
-            self.windSpeed = weather.current.wind_speed
-            self.windDir = weather.current.wind_direction
-            self.precipitation = 100 * weather.current.precipitation
-            self.weatherKind = weather.current.kind
-            self.forecast = iter(weather.forecasts)
-            self.today = next(self.forecast)
 
-            self.tomorrow = next(self.forecast)
-            self.ubermorgen = next(self.forecast)
-            self.sunrise = self.today.astronomy.sun_rise
-            self.sunset  = self.today.astronomy.sun_set
+        from urllib.parse import quote
+        import aiohttp
 
-            self.chanceOfRain = App.deriveChanceOfRain(self.today)
-            self.tomorrowChanceOfRain = App.deriveChanceOfRain(self.tomorrow)
-            self.ubermorgenChanceOfRain = App.deriveChanceOfRain(self.ubermorgen)
-            self.dewPoint = App.deriveDewPoint(self.today)
+        location = quote(self.weatherLocation)
+        url = f"https://wttr.in/{location}?format=j1"
 
-            # print(self.today)
-            # print(self.tomorrow)
-            # print(self.ubermorgen)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                weather = await response.json(content_type=None)
 
+                self.forecast       = weather["weather"]
+
+                self.today          = weather["weather"][0]
+                self.tomorrow       = weather["weather"][1]
+                self.ubermorgen     = weather["weather"][2]
+
+                self.temperature    = int(weather["current_condition"][0]["temp_F"])
+                self.high           = int(self.today["maxtempF"])
+                self.low            = int(self.today["mintempF"])
+                self.humidity       = int(weather["current_condition"][0]["humidity"])
+                self.dewPoint       = App.calculateDewPoint(self.temperature, self.humidity)
+                self.windSpeed      = int(weather["current_condition"][0]["windspeedMiles"])
+                self.windDir        = weather["current_condition"][0]["winddir16Point"]
+                self.precipitation  = float(weather["current_condition"][0]["precipInches"])
+                self.chanceOfRain   = App.calculateChanceOfRain(self.today)
+                self.weatherKind    = int(weather["current_condition"][0]["weatherCode"])
+                self.sunrise        = self.today["astronomy"][0]["sunrise"]
+                self.sunset         = self.today["astronomy"][0]["sunset"]
+
+                self.tomorrowChanceOfRain   = App.calculateChanceOfRain(self.tomorrow)
+                self.ubermorgenChanceOfRain = App.calculateChanceOfRain(self.ubermorgen)
+
+        pass
 
 
 class WeatherIcon:

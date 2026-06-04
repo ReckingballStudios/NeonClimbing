@@ -12,6 +12,7 @@ class Screen:
         self.fps = fps
         self.fpsClock = pygame.time.Clock()
         self.pyScreen = pygame.display.set_mode((self.width, self.height), pygame.FULLSCREEN)
+        # self.pyScreen = pygame.display.set_mode((self.width, self.height), pygame.WINDOWMAXIMIZED)
         pygame.display.set_caption("Neon Climbing")
         pass
 
